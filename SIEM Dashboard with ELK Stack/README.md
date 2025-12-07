@@ -1,4 +1,4 @@
-# Project 3: SIEM Dashboard with ELK Stack
+# SIEM Dashboard with ELK Stack
 
 This project implements a Security Information and Event Management (SIEM) system using the **Elastic Stack (ELK)**. It is designed to ingest, parse, store, and visualize security logs for threat detection.
 
@@ -91,3 +91,4 @@ This implementation runs with `xpack.security.enabled=false` for easy local demo
 
 ---
 **Project Outcome**: A functional real-time dashboard foundation capable of scaling to support Beats, Wazuh, and Cloud logs as per the blueprint.
+
