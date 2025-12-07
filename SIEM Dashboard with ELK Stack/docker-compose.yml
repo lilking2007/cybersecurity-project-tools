@@ -1,0 +1,64 @@
+version: '3.7'
+
+services:
+  # Elasticsearch: The storage and search engine
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:${ELASTIC_VERSION}
+    container_name: siem-elasticsearch
+    environment:
+      - node.name=siem-es-node-1
+      - cluster.name=siem-cluster
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false # Disabled for simplicity in local demo; Enable for production!
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - siem-net
+
+  # Logstash: The ingestion and processing pipeline
+  logstash:
+    image: docker.elastic.co/logstash/logstash:${ELASTIC_VERSION}
+    container_name: siem-logstash
+    volumes:
+      - ./logstash/config/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - ./logstash/pipeline:/usr/share/logstash/pipeline:ro
+    ports:
+      - "5044:5044"   # Beats input
+      - "5000:5000/tcp" # Syslog TCP
+      - "5000:5000/udp" # Syslog UDP
+      - "9600:9600"   # Monitoring API
+    environment:
+      LS_JAVA_OPTS: "-Xmx1g -Xms1g"
+    depends_on:
+      - elasticsearch
+    networks:
+      - siem-net
+
+  # Kibana: The visualization dashboard
+  kibana:
+    image: docker.elastic.co/kibana/kibana:${ELASTIC_VERSION}
+    container_name: siem-kibana
+    volumes:
+      - ./kibana/config/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    networks:
+      - siem-net
+
+volumes:
+  es_data:
+    driver: local
+
+networks:
+  siem-net:
+    driver: bridge
