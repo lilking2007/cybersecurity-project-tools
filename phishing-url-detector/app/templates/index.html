@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing URL Detector - Security Dashboard</title>
+    <meta name="description" content="Advanced ML-powered phishing URL detection system with real-time threat analysis">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.3);
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 0%, #e0e7ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            color: #e0e7ff;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border);
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 16px 20px;
+            background: var(--bg-input);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .result-card {
+            margin-top: 30px;
+            padding: 30px;
+            background: var(--bg-input);
+            border-radius: 16px;
+            border-left: 4px solid var(--primary);
+            display: none;
+            animation: slideIn 0.4s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card.show {
+            display: block;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .risk-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border: 2px solid var(--danger);
+        }
+
+        .risk-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: var(--warning);
+            border: 2px solid var(--warning);
+        }
+
+        .risk-low {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 2px solid var(--success);
+        }
+
+        .risk-safe {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+            border: 2px solid var(--success);
+        }
+
+        .score-display {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 20px 0;
+        }
+
+        .reasons-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .reasons-list li {
+            padding: 12px;
+            background: var(--bg-card);
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid var(--danger);
+        }
+
+        .reasons-list li::before {
+            content: "⚠️";
+            margin-right: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(99, 102, 241, 0.1);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            padding: 25px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .threat-intel-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .threat-badge {
+            padding: 6px 14px;
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🛡️ Phishing URL Detector</h1>
+            <p class="subtitle">Advanced ML-powered threat detection with real-time analysis</p>
+        </header>
+
+        <div class="main-card">
+            <h2 style="margin-bottom: 20px;">Analyze URL</h2>
+            
+            <form id="urlForm">
+                <div class="input-group">
+                    <label for="urlInput">Enter URL to analyze</label>
+                    <input 
+                        type="url" 
+                        id="urlInput" 
+                        placeholder="https://example.com"
+                        required
+                    >
+                </div>
+
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <span>🔍 Analyze URL</span>
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p style="margin-top: 15px; color: var(--text-secondary);">Analyzing URL...</p>
+            </div>
+
+            <div class="result-card" id="resultCard">
+                <h3 style="margin-bottom: 20px;">Analysis Results</h3>
+                
+                <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                    <span class="risk-badge" id="riskBadge">SAFE</span>
+                    <div class="score-display" id="scoreDisplay">0%</div>
+                </div>
+
+                <p style="color: var(--text-secondary); margin-bottom: 10px;">
+                    <strong>URL:</strong> <span id="analyzedUrl"></span>
+                </p>
+                <p style="color: var(--text-secondary); margin-bottom: 10px;">
+                    <strong>Confidence:</strong> <span id="confidence"></span>
+                </p>
+
+                <div id="threatIntelSection" style="display: none; margin-top: 20px;">
+                    <h4 style="margin-bottom: 10px;">⚠️ Threat Intelligence Matches</h4>
+                    <div class="threat-intel-badges" id="threatBadges"></div>
+                </div>
+
+                <div id="reasonsSection" style="display: none; margin-top: 20px;">
+                    <h4 style="margin-bottom: 10px;">Detection Reasons</h4>
+                    <ul class="reasons-list" id="reasonsList"></ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>Phishing URL Detector v1.0 | Powered by Machine Learning & Threat Intelligence</p>
+            <p style="margin-top: 10px;">© 2024 Security Team. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script>
+        const form = document.getElementById('urlForm');
+        const urlInput = document.getElementById('urlInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const resultCard = document.getElementById('resultCard');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const url = urlInput.value.trim();
+            if (!url) return;
+
+            // Show loading
+            loading.classList.add('show');
+            resultCard.classList.remove('show');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/api/v1/check', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+
+                // Hide loading
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+
+                // Display results
+                displayResults(data);
+
+            } catch (error) {
+                console.error('Error:', error);
+                loading.classList.remove('show');
+                submitBtn.disabled = false;
+                alert('Error analyzing URL. Please try again.');
+            }
+        });
+
+        function displayResults(data) {
+            // Show result card
+            resultCard.classList.add('show');
+
+            // Update risk badge
+            const riskBadge = document.getElementById('riskBadge');
+            riskBadge.textContent = data.risk_level;
+            riskBadge.className = 'risk-badge risk-' + data.risk_level.toLowerCase();
+
+            // Update score
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const scorePercent = Math.round(data.risk_score * 100);
+            scoreDisplay.textContent = scorePercent + '%';
+            
+            // Color based on risk
+            if (data.risk_level === 'HIGH') {
+                scoreDisplay.style.color = 'var(--danger)';
+            } else if (data.risk_level === 'MEDIUM') {
+                scoreDisplay.style.color = 'var(--warning)';
+            } else {
+                scoreDisplay.style.color = 'var(--success)';
+            }
+
+            // Update URL and confidence
+            document.getElementById('analyzedUrl').textContent = data.url;
+            document.getElementById('confidence').textContent = Math.round(data.confidence * 100) + '%';
+
+            // Threat intel matches
+            const threatSection = document.getElementById('threatIntelSection');
+            const threatBadges = document.getElementById('threatBadges');
+            
+            if (data.threat_intel_matches && data.threat_intel_matches.length > 0) {
+                threatSection.style.display = 'block';
+                threatBadges.innerHTML = data.threat_intel_matches
+                    .map(source => `<span class="threat-badge">${source}</span>`)
+                    .join('');
+            } else {
+                threatSection.style.display = 'none';
+            }
+
+            // Reasons
+            const reasonsSection = document.getElementById('reasonsSection');
+            const reasonsList = document.getElementById('reasonsList');
+            
+            if (data.reasons && data.reasons.length > 0) {
+                reasonsSection.style.display = 'block';
+                reasonsList.innerHTML = data.reasons
+                    .map(reason => `<li>${reason}</li>`)
+                    .join('');
+            } else {
+                reasonsSection.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

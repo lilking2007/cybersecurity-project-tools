@@ -1,0 +1,49 @@
+# Sample URLs for Testing Phishing Detector
+# Format: One URL per line
+# Lines starting with # are comments and will be ignored
+
+# === BENIGN URLs (Should be marked as SAFE) ===
+https://www.google.com
+https://www.github.com
+https://www.stackoverflow.com
+https://www.wikipedia.org
+https://www.microsoft.com
+https://www.apple.com
+https://www.amazon.com
+https://www.facebook.com
+
+# === SUSPICIOUS URLs (May be flagged as phishing) ===
+# Note: These are example patterns, not real phishing sites
+
+# IP-based URLs (suspicious)
+http://192.168.1.1/login
+http://10.0.0.1/secure
+
+# Suspicious keywords
+http://paypal-verify-account.com
+http://amazon-account-suspended.net
+http://microsoft-security-alert.org
+http://apple-id-locked.info
+
+# Suspicious TLDs
+http://free-prizes.tk
+http://click-here-now.ml
+http://urgent-update.ga
+
+# URL shorteners (could be suspicious)
+http://bit.ly/example123
+http://tinyurl.com/test456
+
+# Typosquatting examples
+http://gooogle.com
+http://faceboook.com
+http://amazom.com
+
+# === USAGE ===
+# Test with CLI:
+#   python cli.py --file sample_urls.txt
+#
+# Test with API:
+#   curl -X POST http://localhost:5000/api/v1/batch \
+#     -H "Content-Type: application/json" \
+#     -d '{"urls": ["https://www.google.com", "http://paypal-verify.tk"]}'

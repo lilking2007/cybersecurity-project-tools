@@ -1,0 +1,169 @@
+# Phishing URL Detector Configuration
+
+# Application Settings
+app:
+  name: "Phishing URL Detector"
+  version: "1.0.0"
+  debug: false
+  host: "0.0.0.0"
+  port: 5000
+  secret_key: "change-this-to-a-random-secret-key"
+
+# Database Configuration
+database:
+  url: "sqlite:///data/phishing_detector.db"
+  echo: false
+  pool_size: 10
+
+# Redis Configuration
+redis:
+  host: "localhost"
+  port: 6379
+  db: 0
+  password: null
+
+# Machine Learning Model Settings
+model:
+  type: "ensemble"  # Options: logistic, random_forest, xgboost, ensemble
+  path: "data/models/phishing_model.pkl"
+  threshold: 0.7  # Risk score threshold for phishing classification
+  retrain_interval_days: 7
+  min_training_samples: 1000
+
+# Feature Extraction Settings
+features:
+  lexical:
+    enabled: true
+    max_url_length: 2048
+  host_based:
+    enabled: true
+    whois_timeout: 5
+    dns_timeout: 3
+  network:
+    enabled: true
+    follow_redirects: true
+    max_redirects: 5
+    request_timeout: 10
+  content:
+    enabled: false  # Requires sandboxed environment
+    sandbox_timeout: 30
+
+# Threat Intelligence APIs
+threat_intel:
+  phishtank:
+    enabled: true
+    api_key: ""  # Get from https://www.phishtank.com/api_register.php
+    cache_ttl: 3600
+  
+  virustotal:
+    enabled: false
+    api_key: ""  # Get from https://www.virustotal.com/
+    cache_ttl: 3600
+  
+  urlhaus:
+    enabled: true
+    api_url: "https://urlhaus-api.abuse.ch/v1/"
+    cache_ttl: 3600
+  
+  google_safe_browsing:
+    enabled: false
+    api_key: ""  # Get from Google Cloud Console
+    cache_ttl: 3600
+  
+  openphish:
+    enabled: true
+    feed_url: "https://openphish.com/feed.txt"
+    update_interval: 3600
+
+# Alerting Configuration
+alerts:
+  enabled: true
+  high_risk_threshold: 0.8
+  
+  email:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    use_tls: true
+    username: ""
+    password: ""
+    from_address: "alerts@phishing-detector.local"
+    to_addresses:
+      - "security-team@example.com"
+  
+  slack:
+    enabled: false
+    webhook_url: ""
+    channel: "#security-alerts"
+  
+  webhook:
+    enabled: false
+    url: ""
+    headers:
+      Content-Type: "application/json"
+
+# API Settings
+api:
+  rate_limit: "100/minute"
+  enable_cors: true
+  require_auth: false
+  jwt_expiry_hours: 24
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:5000"
+
+# Logging Configuration
+logging:
+  level: "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+  format: "json"
+  file: "logs/phishing_detector.log"
+  max_bytes: 10485760  # 10MB
+  backup_count: 5
+  
+  # Log all URL submissions
+  audit_log:
+    enabled: true
+    file: "logs/audit.log"
+
+# Security Settings
+security:
+  url_sanitization: true
+  max_url_length: 2048
+  blocked_domains:
+    - "localhost"
+    - "127.0.0.1"
+  allowed_schemes:
+    - "http"
+    - "https"
+
+# Analytics & Monitoring
+analytics:
+  enabled: true
+  retention_days: 90
+  metrics:
+    - "detection_accuracy"
+    - "false_positive_rate"
+    - "false_negative_rate"
+    - "response_time"
+    - "threat_intel_matches"
+
+# Celery Task Queue
+celery:
+  broker_url: "redis://localhost:6379/0"
+  result_backend: "redis://localhost:6379/0"
+  task_serializer: "json"
+  result_serializer: "json"
+  timezone: "UTC"
+
+# Data Collection
+data_collection:
+  auto_update_feeds: true
+  update_interval_hours: 6
+  sources:
+    - phishtank
+    - openphish
+    - urlhaus
+  
+  # Store submitted URLs for retraining
+  store_submissions: true
+  require_user_feedback: false
