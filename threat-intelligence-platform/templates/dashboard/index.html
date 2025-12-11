@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threat Intel Platform</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-shield-lock-fill me-2"></i>Threat Intel Platform
+            </a>
+            <div class="d-flex align-items-center">
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    System Online
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <!-- Stats Row -->
+        <div class="row g-4 mb-5">
+            <div class="col-md-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary text-uppercase fs-7 fw-bold mb-3">Total IOCs</h6>
+                        <div class="stat-value">{{ total_iocs }}</div>
+                        <div class="text-secondary fs-7">
+                            <span class="text-success fw-medium">+12%</span> vs last week
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary text-uppercase fs-7 fw-bold mb-3">Malicious Hits</h6>
+                        <div class="stat-value text-danger">{{ malicious_iocs }}</div>
+                        <div class="text-secondary fs-7">
+                            <span class="text-danger fw-medium">+5%</span> detection rate
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary text-uppercase fs-7 fw-bold mb-3">Active Incidents</h6>
+                        <div class="stat-value">{{ recent_incidents|length }}</div>
+                        <div class="text-secondary fs-7">
+                            <span class="text-warning fw-medium">Action Required</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card stat-card h-100">
+                    <div class="card-body">
+                        <h6 class="text-secondary text-uppercase fs-7 fw-bold mb-3">Threat Feeds</h6>
+                        <div class="stat-value">Active</div>
+                        <div class="text-secondary fs-7">
+                            Next sync in <span class="text-secondary fw-medium">15m</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Row -->
+        <div class="row g-4">
+            <!-- Chart Column -->
+            <div class="col-lg-7">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>IOC Distribution</span>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button">
+                                Last 7 Days
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body position-relative">
+                        <canvas id="iocChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Incidents Column -->
+            <div class="col-lg-5">
+                <div class="card h-100">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Recent Incidents</span>
+                        <a href="#" class="text-accent-cyan text-decoration-none fs-7 fw-medium">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0 align-middle">
+                                <tbody>
+                                    {% for incident in recent_incidents %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-medium text-white">{{ incident.title }}</div>
+                                            <div class="text-secondary small">{{ incident.created_at|date:"M d, H:i" }}
+                                            </div>
+                                        </td>
+                                        <td class="text-end">
+                                            {% if incident.severity == 'CRITICAL' %}
+                                            <span class="badge badge-critical">Critical</span>
+                                            {% elif incident.severity == 'HIGH' %}
+                                            <span class="badge badge-high">High</span>
+                                            {% elif incident.severity == 'MEDIUM' %}
+                                            <span class="badge badge-medium">Medium</span>
+                                            {% else %}
+                                            <span class="badge badge-low">Low</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="2" class="text-center py-4 text-secondary">
+                                            No pending incidents.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart Configuration
+        Chart.defaults.color = '#94a3b8';
+        Chart.defaults.borderColor = 'rgba(255, 255, 255, 0.1)';
+
+        const ctx = document.getElementById('iocChart').getContext('2d');
+        const labels = [{% for item in ioc_types %}"{{ item.ioc_type }}", {% endfor %}];
+        const data = [{% for item in ioc_types %}{ { item.count } }, {% endfor %}];
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Count',
+                    data: data,
+                    backgroundColor: [
+                        'rgba(6, 182, 212, 0.7)',
+                        'rgba(139, 92, 246, 0.7)',
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(16, 185, 129, 0.7)',
+                        'rgba(249, 115, 22, 0.7)'
+                    ],
+                    borderRadius: 4,
+                    borderWidth: 0,
+                    hoverBackgroundColor: [
+                        '#06b6d4',
+                        '#8b5cf6',
+                        '#ef4444',
+                        '#10b981',
+                        '#f97316'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            borderDash: [5, 5]
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
